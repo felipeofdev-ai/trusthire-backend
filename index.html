@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrustHire — Verify before you trust</title>
+<meta name="description" content="Paste any recruiter message. AI detects job scams in seconds — risk score, signal breakdown, and actionable recommendations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111111; --surface2: #161616;
+  --border: #1e1e1e; --accent: #e8ff47; --accent-dim: rgba(232,255,71,0.1);
+  --danger: #ff4747; --warn: #ff9f0a; --safe: #34c759;
+  --text: #f0f0f0; --muted: #666;
+  --mono: 'DM Mono', monospace; --sans: 'Syne', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;overflow-x:hidden}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:rgba(10,10,10,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-logo{font-weight:800;font-size:1.1rem;letter-spacing:-.02em;color:var(--accent);text-decoration:none}
+.nav-links{display:flex;gap:2rem;list-style:none;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.8rem;font-family:var(--mono);transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.usage-pill{font-family:var(--mono);font-size:.72rem;background:var(--surface);border:1px solid var(--border);padding:.28rem .7rem;display:flex;align-items:center;gap:.4rem}
+.usage-pill .uses-left{color:var(--accent);font-weight:600}
+.usage-pill.warn .uses-left{color:var(--warn)}
+.usage-pill.empty .uses-left{color:var(--danger)}
+.nav-upgrade{background:var(--accent);color:#000;border:none;padding:.4rem 1rem;font-family:var(--mono);font-size:.76rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.nav-upgrade:hover{opacity:.85}
+
+#hero{min-height:100vh;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:6rem 2rem 4rem;max-width:900px;margin:0 auto;position:relative}
+.hero-tag{font-family:var(--mono);font-size:.7rem;color:var(--accent);border:1px solid rgba(232,255,71,.3);padding:.3rem .8rem;margin-bottom:2rem;letter-spacing:.08em;opacity:0;animation:fadeUp .6s .2s forwards;display:inline-block}
+h1{font-size:clamp(2.8rem,7vw,5rem);font-weight:800;line-height:1.05;letter-spacing:-.04em;margin-bottom:1.5rem;opacity:0;animation:fadeUp .7s .4s forwards}
+h1 em{font-style:normal;color:var(--accent)}
+.hero-sub{font-size:1rem;color:var(--muted);max-width:500px;font-family:var(--mono);font-weight:300;opacity:0;animation:fadeUp .7s .6s forwards;margin-bottom:2.5rem;line-height:1.8}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap;opacity:0;animation:fadeUp .7s .8s forwards}
+.btn-primary{background:var(--accent);color:#000;border:none;padding:.75rem 1.75rem;font-family:var(--mono);font-weight:600;cursor:pointer;font-size:.86rem;transition:opacity .2s,transform .15s}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border);padding:.75rem 1.75rem;font-family:var(--mono);font-size:.86rem;cursor:pointer;transition:border-color .2s;text-decoration:none;display:inline-block}
+.btn-ghost:hover{border-color:var(--muted)}
+.api-status{position:absolute;bottom:2rem;display:flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--safe);animation:blink 2s infinite}
+.status-dot.connecting{background:var(--warn)}
+.status-dot.offline{background:var(--danger);animation:none}
+
+.section{padding:5rem 2rem;max-width:900px;margin:0 auto;border-top:1px solid var(--border)}
+.section-label{font-family:var(--mono);font-size:.67rem;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.7rem}
+.section-title{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;letter-spacing:-.03em;margin-bottom:1.75rem}
+
+#analyzer{padding:5rem 2rem;max-width:900px;margin:0 auto}
+.analyzer-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:700px){.analyzer-grid{grid-template-columns:1fr}.nav-links{display:none}}
+
+textarea#msg{width:100%;height:240px;resize:vertical;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.82rem;padding:1rem;outline:none;line-height:1.7;transition:border-color .2s}
+textarea#msg:focus{border-color:var(--accent)}
+textarea#msg::placeholder{color:var(--muted)}
+
+.input-meta{display:flex;justify-content:space-between;align-items:center;margin-top:.55rem}
+.samples{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
+.samples span{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+.sample-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:.68rem;padding:.22rem .55rem;cursor:pointer;transition:all .2s}
+.sample-btn:hover{border-color:var(--muted);color:var(--text)}
+.char-count{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.char-count.warn{color:var(--warn)}
+
+.analyze-btn{width:100%;background:var(--accent);color:#000;border:none;padding:.88rem;font-family:var(--mono);font-weight:600;font-size:.86rem;cursor:pointer;transition:opacity .2s;position:relative;overflow:hidden;margin-top:.7rem}
+.analyze-btn:disabled{opacity:.35;cursor:not-allowed}
+.analyze-btn:not(:disabled):hover{opacity:.88}
+.analyze-btn.loading .btn-text{visibility:hidden}
+.analyze-btn .spinner{display:none}
+.analyze-btn.loading .spinner{display:block;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:17px;height:17px;border:2px solid #000;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+
+.free-limit-bar{display:flex;align-items:center;gap:.75rem;margin-top:.65rem;font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.free-dots{display:flex;gap:.3rem}
+.free-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);transition:background .3s}
+.free-dot.used{background:var(--border)}
+.free-limit-bar a{color:var(--accent);text-decoration:none;cursor:pointer}
+.free-limit-bar a:hover{text-decoration:underline}
+
+.result-panel{background:var(--surface);border:1px solid var(--border);padding:1.4rem;display:flex;flex-direction:column;gap:1.1rem;min-height:300px}
+.result-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:.7rem;color:var(--muted);font-family:var(--mono);font-size:.76rem;text-align:center;padding:2rem 0}
+.result-empty .icon{font-size:2rem;opacity:.2}
+
+.risk-header{display:flex;justify-content:space-between;align-items:flex-start}
+.risk-badge{font-family:var(--mono);font-size:.7rem;font-weight:600;padding:.25rem .7rem;letter-spacing:.08em}
+.risk-badge.safe{background:rgba(52,199,89,.12);color:var(--safe);border:1px solid rgba(52,199,89,.25)}
+.risk-badge.low{background:rgba(52,199,89,.08);color:#7ecf8a;border:1px solid rgba(52,199,89,.15)}
+.risk-badge.moderate{background:rgba(255,159,10,.1);color:var(--warn);border:1px solid rgba(255,159,10,.25)}
+.risk-badge.high{background:rgba(255,71,71,.1);color:var(--danger);border:1px solid rgba(255,71,71,.25)}
+.risk-badge.critical{background:rgba(255,71,71,.18);color:var(--danger);border:1px solid var(--danger);animation:critPulse 1.5s infinite}
+
+.score-num{font-size:2.4rem;font-weight:800;line-height:1;text-align:right}
+.score-label{font-family:var(--mono);font-size:.66rem;color:var(--muted);text-align:right}
+.score-bar-track{height:3px;background:var(--border);overflow:hidden}
+.score-bar-fill{height:100%;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+
+.signals-list{display:flex;flex-direction:column;gap:.38rem}
+.signal-item{display:flex;gap:.55rem;align-items:flex-start;font-family:var(--mono);font-size:.74rem;padding:.42rem .65rem;background:var(--bg);border-left:2px solid transparent}
+.signal-item.critical{border-color:var(--danger)}
+.signal-item.high{border-color:#ff8c00}
+.signal-item.medium{border-color:var(--warn)}
+.signal-item.low{border-color:var(--safe)}
+.signal-sev{font-size:.6rem;opacity:.6;text-transform:uppercase;white-space:nowrap;margin-top:1px}
+.signal-msg{color:var(--text);flex:1;line-height:1.4}
+
+.recommendation{font-family:var(--mono);font-size:.78rem;color:var(--text);background:var(--bg);padding:.72rem .95rem;border-left:3px solid var(--accent);line-height:1.65}
+.action-items{display:flex;flex-direction:column;gap:.32rem}
+.action-item{font-family:var(--mono);font-size:.72rem;display:flex;gap:.45rem}
+.action-item::before{content:'→';color:var(--accent);flex-shrink:0}
+.pro-badge-inline{font-family:var(--mono);font-size:.6rem;background:var(--accent);color:#000;padding:.12rem .4rem;font-weight:700;letter-spacing:.05em;vertical-align:middle;margin-left:.35rem}
+
+.locked-features{display:flex;flex-direction:column;gap:.4rem}
+.locked-row{display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:.74rem;background:var(--bg);padding:.55rem .85rem;border:1px solid var(--border);cursor:pointer;transition:border-color .2s}
+.locked-row:hover{border-color:var(--muted)}
+.lock-icon{color:var(--muted);font-size:.78rem}
+.lock-label{flex:1;margin-left:.55rem;color:var(--muted)}
+.lock-cta{color:var(--accent);font-size:.68rem;white-space:nowrap}
+
+.result-actions{display:flex;gap:.45rem}
+.result-action-btn{flex:1;padding:.48rem;font-family:var(--mono);font-size:.72rem;cursor:pointer;border:none;transition:opacity .2s}
+.copy-btn{background:var(--surface2);color:var(--text);border:1px solid var(--border)!important;border:none}
+.copy-btn:hover{border-color:var(--muted)!important}
+.pdf-btn,.csv-btn{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(232,255,71,.2)!important;border:none}
+.pdf-btn:hover,.csv-btn:hover{opacity:.8}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);max-width:440px;width:100%;padding:2.25rem;position:relative;transform:translateY(18px);transition:transform .25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-close{position:absolute;top:.9rem;right:.9rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:.2rem .45rem;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-icon{font-size:2.2rem;margin-bottom:.9rem}
+.modal-title{font-size:1.45rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.45rem}
+.modal-sub{font-family:var(--mono);font-size:.79rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.75}
+.modal-features{list-style:none;margin-bottom:1.5rem;display:flex;flex-direction:column;gap:.45rem}
+.modal-features li{font-family:var(--mono);font-size:.78rem;display:flex;gap:.45rem}
+.modal-features li::before{content:'✓';color:var(--accent);flex-shrink:0}
+.modal-price{font-size:2rem;font-weight:800;color:var(--accent);letter-spacing:-.04em;margin-bottom:.2rem}
+.modal-price span{font-size:.85rem;color:var(--muted);font-weight:400}
+.modal-price-note{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-bottom:1.4rem}
+.modal-cta{width:100%;background:var(--accent);color:#000;border:none;padding:.95rem;font-family:var(--mono);font-weight:700;font-size:.9rem;cursor:pointer;transition:opacity .2s;margin-bottom:.65rem}
+.modal-cta:hover{opacity:.88}
+.modal-dismiss{width:100%;background:transparent;color:var(--muted);border:none;font-family:var(--mono);font-size:.72rem;cursor:pointer;padding:.25rem}
+.modal-dismiss:hover{color:var(--text)}
+
+/* HISTORY */
+.history-locked{display:flex;flex-direction:column;align-items:center;gap:.9rem;padding:2.25rem;background:var(--surface);border:1px solid var(--border);margin-top:1.25rem;text-align:center}
+.history-locked .lock-big{font-size:1.8rem;opacity:.25}
+.history-locked p{font-family:var(--mono);font-size:.78rem;color:var(--muted);line-height:1.7}
+.history-list{display:flex;flex-direction:column;gap:.4rem;margin-top:1.25rem}
+.history-item{display:flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);padding:.7rem .95rem;cursor:pointer;transition:border-color .2s}
+.history-item:hover{border-color:var(--muted)}
+.history-score{font-weight:800;font-size:1.1rem;min-width:2.5rem}
+.history-meta{flex:1;font-family:var(--mono);font-size:.74rem}
+.h-text{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:380px}
+.h-time{color:var(--muted);font-size:.66rem;margin-top:.12rem}
+.history-empty{font-family:var(--mono);font-size:.8rem;color:var(--muted);margin-top:1rem}
+
+/* HOW */
+.steps-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);margin-top:1.5rem}
+@media(max-width:600px){.steps-grid{grid-template-columns:1fr 1fr}}
+.step{background:var(--bg);padding:1.4rem .95rem}
+.step-num{font-family:var(--mono);font-size:.67rem;color:var(--accent);margin-bottom:.55rem}
+.step-name{font-weight:700;font-size:.86rem;margin-bottom:.28rem}
+.step-desc{font-family:var(--mono);font-size:.68rem;color:var(--muted);line-height:1.5}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-top:1.5rem}
+@media(max-width:600px){.pricing-grid{grid-template-columns:1fr}}
+.plan-card{background:var(--surface);padding:2rem 1.5rem;position:relative}
+.plan-card.featured{background:#0d1300}
+.plan-featured-badge{position:absolute;top:0;right:1.25rem;background:var(--accent);color:#000;font-family:var(--mono);font-size:.6rem;padding:.18rem .55rem;font-weight:700}
+.plan-name{font-weight:800;font-size:1.25rem;margin-bottom:.45rem}
+.plan-price{font-family:var(--mono);font-size:2.1rem;font-weight:500;color:var(--accent);line-height:1}
+.plan-price span{font-size:.82rem;color:var(--muted)}
+.plan-limit{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin:.7rem 0 1.2rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border)}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.75rem}
+.plan-features li{font-family:var(--mono);font-size:.74rem;display:flex;gap:.4rem;align-items:flex-start}
+.plan-features li::before{content:'→';color:var(--accent);flex-shrink:0}
+.plan-features li.no::before{content:'—';color:var(--border)}
+.plan-features li.no{color:var(--muted)}
+.plan-btn{width:100%;padding:.72rem;font-family:var(--mono);font-size:.8rem;cursor:pointer;font-weight:600;transition:opacity .2s;border:none}
+.free-btn{background:transparent;color:var(--text);border:1px solid var(--border)!important;border:none}
+.free-btn:hover{opacity:.8}
+.pro-btn{background:var(--accent);color:#000}
+.pro-btn:hover{opacity:.88}
+
+footer{border-top:1px solid var(--border);padding:1.75rem 2rem;max-width:900px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:.7rem;color:var(--muted);flex-wrap:wrap;gap:1rem}
+footer a{color:var(--muted);text-decoration:none}
+footer a:hover{color:var(--text)}
+
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(3rem);z-index:600;background:var(--surface);border:1px solid var(--border);font-family:var(--mono);font-size:.76rem;padding:.6rem 1.2rem;opacity:0;transition:transform .3s,opacity .3s;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes critPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,71,71,.3)}50%{box-shadow:0 0 0 5px rgba(255,71,71,0)}}
+</style>
+</head>
+<body>
+
+<!-- UPGRADE MODAL -->
+<div class="modal-overlay" id="upgradeModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-icon" id="modalIcon">🔒</div>
+    <div class="modal-title" id="modalTitle">Upgrade to Pro</div>
+    <p class="modal-sub" id="modalSub">You've used all 3 free analyses for today. Upgrade to Pro to keep going.</p>
+    <ul class="modal-features">
+      <li>100 analyses per day</li>
+      <li>AI analysis powered by Claude</li>
+      <li>Full analysis history</li>
+      <li>PDF report for each analysis</li>
+      <li>CSV export of results</li>
+      <li>Priority API access</li>
+    </ul>
+    <div class="modal-price">$9.90<span>/month</span></div>
+    <div class="modal-price-note">Cancel anytime. No contracts. Instant access.</div>
+    <button class="modal-cta" onclick="goToCheckout()">Upgrade to Pro →</button>
+    <button class="modal-dismiss" onclick="closeModal()">Maybe later</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">TrustHire</a>
+  <ul class="nav-links">
+    <li><a href="#analyzer">Analyzer</a></li>
+    <li><a href="#history">History</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="https://github.com/felipeofdev-ai/trusthire" target="_blank">GitHub →</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:.7rem">
+    <div class="usage-pill" id="usagePill">
+      <span class="uses-left" id="usesLeft">3</span>
+      <span>free left</span>
+    </div>
+    <button class="nav-upgrade" onclick="openModal('nav')">Pro — $9.90/mo</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-tag">Open Source · AI-Powered · v2.0</div>
+  <h1>Verify every<br><em>job offer</em><br>before you trust.</h1>
+  <p class="hero-sub">Paste any recruiter message. Five intelligence layers detect fraud in seconds — pattern engine, link scan, social engineering, domain reputation, and Claude AI.</p>
+  <div class="hero-btns">
+    <button class="btn-primary" onclick="document.getElementById('analyzer').scrollIntoView({behavior:'smooth'})">Analyze a message →</button>
+    <a href="https://github.com/felipeofdev-ai/trusthire" class="btn-ghost" target="_blank">View on GitHub</a>
+  </div>
+  <div class="api-status">
+    <span class="status-dot connecting" id="statusDot"></span>
+    <span id="statusText">connecting to api...</span>
+  </div>
+</section>
+
+<!-- ANALYZER -->
+<section id="analyzer" style="padding:5rem 2rem;max-width:900px;margin:0 auto">
+  <div class="section-label">// live tool</div>
+  <div class="section-title">Analyze a recruiter message</div>
+  <div class="analyzer-grid">
+    <div>
+      <textarea id="msg" placeholder="Paste the recruiter message here...&#10;&#10;e.g. Hi! You've been selected. Salary $8,000/mo. Respond URGENTLY — send $200 via Bitcoin for your equipment kit." maxlength="5000"></textarea>
+      <div class="input-meta">
+        <div class="samples">
+          <span>Try:</span>
+          <button class="sample-btn" onclick="loadSample('scam')">🚨 Scam</button>
+          <button class="sample-btn" onclick="loadSample('legit')">✅ Legit</button>
+          <button class="sample-btn" onclick="loadSample('moderate')">⚠️ Moderate</button>
+        </div>
+        <span class="char-count" id="charCount">0/5000</span>
+      </div>
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+        <span class="btn-text">Analyze Message</span>
+        <span class="spinner"></span>
+      </button>
+      <div class="free-limit-bar" id="freeLimitBar">
+        <div class="free-dots" id="freeDots"></div>
+        <span id="freeLimitText">3 free analyses today · <a onclick="openModal('limit')">Go Pro for unlimited</a></span>
+      </div>
+    </div>
+    <div class="result-panel" id="resultPanel">
+      <div class="result-empty" id="resultEmpty">
+        <span class="icon">🛡</span>
+        <span>Paste a message and click Analyze<br>to see your risk assessment</span>
+      </div>
+      <div id="resultContent" style="display:none;flex-direction:column;gap:1.1rem"></div>
+    </div>
+  </div>
+</section>
+
+<!-- HISTORY -->
+<section id="history" class="section">
+  <div class="section-label">// your history</div>
+  <div class="section-title">Past analyses</div>
+  <div id="historyContent"></div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="section-label">// how it works</div>
+  <div class="section-title">Five layers of analysis.</div>
+  <div class="steps-grid">
+    <div class="step"><div class="step-num">01</div><div class="step-name">Paste Message</div><div class="step-desc">Any recruiter text, email, or offer</div></div>
+    <div class="step"><div class="step-num">02</div><div class="step-name">Pattern Scan</div><div class="step-desc">100+ linguistic & structural rules</div></div>
+    <div class="step"><div class="step-num">03</div><div class="step-name">Signal Scoring</div><div class="step-desc">Signals weighted by severity</div></div>
+    <div class="step"><div class="step-num">04</div><div class="step-name">AI Heuristics</div><div class="step-desc">Claude contextualizes intent</div></div>
+    <div class="step"><div class="step-num">05</div><div class="step-name">Risk Report</div><div class="step-desc">Score + signals + actions</div></div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="pricing">
+  <div class="section-label">// pricing</div>
+  <div class="section-title">Simple, honest pricing.</div>
+  <div class="pricing-grid">
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">$0<span>/mo</span></div>
+      <div class="plan-limit">3 analyses per day · No account needed</div>
+      <ul class="plan-features">
+        <li>Pattern-based detection</li>
+        <li>Risk score 0–100</li>
+        <li>Signal breakdown</li>
+        <li>Basic recommendations</li>
+        <li class="no">AI analysis (Claude)</li>
+        <li class="no">Analysis history</li>
+        <li class="no">PDF reports</li>
+        <li class="no">CSV export</li>
+      </ul>
+      <button class="plan-btn free-btn" style="border:1px solid var(--border)" onclick="document.getElementById('analyzer').scrollIntoView({behavior:'smooth'})">Start Free →</button>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-featured-badge">MOST POPULAR</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">$9.90<span>/mo</span></div>
+      <div class="plan-limit">100 analyses per day · Cancel anytime</div>
+      <ul class="plan-features">
+        <li>Everything in Free</li>
+        <li>AI analysis (Claude)</li>
+        <li>Full analysis history</li>
+        <li>PDF report per analysis</li>
+        <li>CSV export</li>
+        <li>Link & URL scanning</li>
+        <li>Social engineering detection</li>
+        <li>Priority API (100 req/min)</li>
+      </ul>
+      <button class="plan-btn pro-btn" onclick="openModal('pricing')">Upgrade to Pro →</button>
+    </div>
+  </div>
+  <p style="font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-top:.9rem">Need more? Enterprise plans available — <a href="mailto:hi@trusthire.dev" style="color:var(--accent)">contact us</a>.</p>
+</section>
+
+<footer>
+  <span>© 2025 TrustHire — Open source. Built for professionals.</span>
+  <div style="display:flex;gap:1.5rem">
+    <a href="https://github.com/felipeofdev-ai/trusthire" target="_blank">GitHub</a>
+    <a href="#analyzer">Try it</a>
+    <a href="#pricing">Pricing</a>
+    <a href="https://github.com/felipeofdev-ai/trusthire/blob/main/LICENSE" target="_blank">MIT</a>
+  </div>
+</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const API_BASE = (() => {
+  if (window.location.hostname === 'felipeofdev-ai.github.io' || window.location.hostname === 'trusthire.dev')
+    return 'https://trusthire-api-production-c210.up.railway.app/api/v1';
+  return 'http://localhost:8000/api/v1';
+})();
+
+// After creating your Stripe product, paste the Payment Link URL here:
+// Stripe Dashboard → Products → TrustHire Pro → Payment Link → Copy
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/REPLACE_AFTER_STRIPE_SETUP';
+
+const FREE_LIMIT = 3;
+
+// ── FREEMIUM (localStorage) ───────────────────────────────────────────────
+function getState() {
+  const today = new Date().toDateString();
+  try {
+    const s = JSON.parse(localStorage.getItem('th_usage') || '{}');
+    if (s.date !== today) return { date: today, count: 0, isPro: s.isPro || false };
+    return { date: today, count: s.count || 0, isPro: s.isPro || false };
+  } catch { return { date: new Date().toDateString(), count: 0, isPro: false }; }
+}
+function saveState(s) { localStorage.setItem('th_usage', JSON.stringify(s)); }
+function remaining() { const s = getState(); return s.isPro ? 999 : Math.max(0, FREE_LIMIT - s.count); }
+function incrementUse() { const s = getState(); if (!s.isPro) { s.count++; saveState(s); } }
+
+function updateUsageUI() {
+  const s = getState(); const rem = remaining();
+  const pill = document.getElementById('usagePill');
+  if (s.isPro) {
+    pill.innerHTML = '<span style="color:var(--accent);font-weight:700;">✦ PRO</span>';
+    document.getElementById('freeLimitBar').style.display = 'none';
+    return;
+  }
+  document.getElementById('usesLeft').textContent = rem;
+  pill.className = 'usage-pill' + (rem === 1 ? ' warn' : rem === 0 ? ' empty' : '');
+  const dots = document.getElementById('freeDots');
+  dots.innerHTML = Array.from({length:FREE_LIMIT}, (_,i) =>
+    `<span class="free-dot${i >= rem ? ' used' : ''}"></span>`).join('');
+  const txt = document.getElementById('freeLimitText');
+  if (rem === 0) txt.innerHTML = 'No free analyses left today · <a onclick="openModal(\'limit\')">Upgrade to continue</a>';
+  else if (rem === 1) txt.innerHTML = '<span style="color:var(--warn)">Last free analysis today</span> · <a onclick="openModal(\'limit\')">Go Pro for unlimited</a>';
+  else txt.innerHTML = `${rem} free analyses today · <a onclick="openModal('limit')">Go Pro for unlimited</a>`;
+}
+
+// ── SAMPLES ───────────────────────────────────────────────────────────────
+const SAMPLES = {
+  scam: `Hi! Congratulations — you've been selected for our remote Data Entry position!
+Salary: $8,500/month. No experience required. 100% remote.
+IMPORTANT: This offer expires TODAY. Respond IMMEDIATELY.
+To confirm your spot, send $250 via Bitcoin for your equipment kit.
+Contact HR on Telegram: @recruiter_hr. Do NOT tell your current employer yet.
+BTC wallet: 1A2B3C4D5E6F...`,
+  legit: `Hi Felipe,
+I'm Sarah Chen, Senior Recruiter at Stripe. I came across your profile on LinkedIn and I'm impressed with your backend engineering experience.
+We're hiring for a Senior Python Engineer on our Payments Infrastructure team. Hybrid (3 days SF), base $180K–$220K + equity.
+Would you be open to a 30-minute intro call this week? Book at calendly.com/stripe-recruiting/felipe
+LinkedIn: linkedin.com/in/sarahchen-stripe`,
+  moderate: `Hello, we found your resume on Indeed and would like to discuss a remote opportunity.
+The position is Customer Support, $45/hr, fully remote. Please reply with your availability for an interview.
+We will send more details via WhatsApp (+1 555 0123).
+Best, Mark Wilson — Global Staffing Solutions`
+};
+function loadSample(t) { document.getElementById('msg').value = SAMPLES[t]; updateCharCount(); }
+function updateCharCount() {
+  const n = document.getElementById('msg').value.length;
+  const el = document.getElementById('charCount');
+  el.textContent = `${n}/5000`; el.className = n > 4500 ? 'char-count warn' : 'char-count';
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+const MODAL_COPY = {
+  limit:          ['Daily limit reached', "You've used all 3 free analyses today. Upgrade to Pro to keep analyzing — plus unlock AI, history, PDF & CSV."],
+  nav:            ['Upgrade to Pro', 'Get 100 analyses/day, AI-powered insights, history, PDF reports, and CSV export.'],
+  pricing:        ['Upgrade to Pro', 'Get 100 analyses/day, AI-powered insights, history, PDF reports, and CSV export.'],
+  locked_ai:      ['Unlock AI Analysis', 'Claude analyzes context, tone, and intent beyond pattern rules — catches subtle scams.'],
+  locked_history: ['Unlock History', 'See every past analysis, revisit results, and track patterns over time.'],
+  locked_pdf:     ['Unlock PDF Reports', 'Download a professional report for each analysis — perfect for sharing or filing.'],
+  locked_csv:     ['Unlock CSV Export', 'Export all results to CSV for spreadsheet analysis and record-keeping.'],
+};
+function openModal(trigger) {
+  const [title, sub] = MODAL_COPY[trigger] || MODAL_COPY.nav;
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalSub').textContent = sub;
+  document.getElementById('upgradeModal').classList.add('open');
+}
+function closeModal() { document.getElementById('upgradeModal').classList.remove('open'); }
+document.getElementById('upgradeModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+function goToCheckout() {
+  if (STRIPE_PAYMENT_LINK && !STRIPE_PAYMENT_LINK.includes('REPLACE')) {
+    window.open(STRIPE_PAYMENT_LINK, '_blank');
+  } else {
+    closeModal();
+    document.getElementById('pricing').scrollIntoView({behavior:'smooth'});
+    showToast('Configure Stripe to activate payments — see RAILWAY_DEPLOY.md');
+  }
+}
+
+// ── ANALYZE ───────────────────────────────────────────────────────────────
+async function analyze() {
+  const text = document.getElementById('msg').value.trim();
+  if (!text || text.length < 10) { showToast('Paste a message first'); return; }
+  const s = getState();
+  if (!s.isPro && s.count >= FREE_LIMIT) { openModal('limit'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true; btn.classList.add('loading');
+  document.getElementById('resultEmpty').style.display = 'none';
+  document.getElementById('resultContent').style.display = 'flex';
+  document.getElementById('resultContent').innerHTML =
+    `<div style="display:flex;align-items:center;gap:.7rem;color:var(--muted);font-family:var(--mono);font-size:.76rem;padding:.4rem 0">
+      <div style="width:13px;height:13px;border:2px solid var(--muted);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0"></div>
+      Analyzing across 5 layers...
+    </div>`;
+
+  try {
+    const r = await fetch(`${API_BASE}/analyze`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text, include_ai_analysis: s.isPro, include_link_scan: true}),
+    });
+    if (r.status === 429) { openModal('limit'); return; }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    incrementUse(); updateUsageUI();
+    window._last = { data, text };
+    if (s.isPro) saveToHistory(text, data);
+    renderResult(data, s.isPro);
+    const rem = remaining();
+    if (!s.isPro && rem === 0) setTimeout(() => openModal('limit'), 1800);
+    else if (!s.isPro && rem === 1) showToast('⚠️ Last free analysis today — upgrade for unlimited');
+  } catch(e) {
+    const data = localAnalysis(text);
+    incrementUse(); updateUsageUI();
+    window._last = { data, text };
+    renderResult(data, false);
+    showToast('⚠️ Local analysis — API offline', 3500);
+  } finally {
+    btn.disabled = false; btn.classList.remove('loading');
+  }
+}
+
+// ── LOCAL FALLBACK ────────────────────────────────────────────────────────
+function localAnalysis(text) {
+  const t = text.toLowerCase(); const sigs = []; let score = 0;
+  [
+    [/bitcoin|btc|crypto|ethereum|wallet\s*address/, 'Cryptocurrency payment requested', 'critical', 40],
+    [/send \$|pay \$|\$\d+.*fee|processing fee|registration fee|equipment fee/, 'Upfront payment required', 'critical', 35],
+    [/urgent|immediately|today only|act fast|expires today|respond now/, 'Artificial urgency', 'high', 20],
+    [/telegram|whatsapp|dm me/, 'Off-platform contact requested', 'high', 18],
+    [/\$[6-9]\d{3}|\$[1-9]\d{4}|no experience required/, 'Unrealistic salary/requirements', 'medium', 12],
+    [/ssn|social security|bank account|routing number/, 'Sensitive data requested', 'critical', 40],
+    [/don.t tell|keep.*secret|confidential/, 'Secrecy tactic', 'medium', 12],
+    [/gmail\.com|yahoo\.com|hotmail\.com/, 'Free email domain', 'low', 8],
+  ].forEach(([p,msg,sev,pts]) => { if(p.test(t)){sigs.push({message:msg,severity:sev,confidence:.85});score+=pts;} });
+  score = Math.min(score,100);
+  const rl = score<20?'safe':score<40?'low':score<60?'moderate':score<80?'high':'critical';
+  const recs = {safe:'No significant risk signals detected.',low:'Minor signals. Exercise normal caution.',moderate:'Multiple indicators. Verify company before proceeding.',high:'High risk. Do not share info or make payments.',critical:'Critical scam indicators. Do not engage.'};
+  return {risk_score:score,risk_level:rl,confidence:.75,signals:sigs,recommendation:recs[rl],action_items:score>=60?['Do not send any money','Verify company on official website','Report if suspicious']:['Research company on LinkedIn'],ai_assessment:null,engine_version:'local',processing_time_ms:1};
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function renderResult(data, isPro) {
+  const { risk_score:sc, risk_level:rl, signals:sigs=[], recommendation:rec, action_items:acts=[], ai_assessment:ai, confidence:conf=.8, processing_time_ms:ms } = data;
+  const color = sc<20?'var(--safe)':sc<40?'#7ecf8a':sc<60?'var(--warn)':'var(--danger)';
+
+  const sigHtml = sigs.slice(0,6).map(s =>
+    `<div class="signal-item ${s.severity}"><span class="signal-sev">${s.severity}</span><span class="signal-msg">${s.message}</span></div>`).join('');
+
+  const actHtml = acts.length
+    ? `<div class="action-items">${acts.map(a=>`<div class="action-item">${a}</div>`).join('')}</div>` : '';
+
+  const aiHtml = ai
+    ? `<div class="recommendation" style="border-color:var(--accent)"><span style="font-size:.65rem;font-family:var(--mono);color:var(--accent)">✦ AI ANALYSIS<span class="pro-badge-inline">PRO</span></span><div style="margin-top:.45rem;font-size:.76rem">${ai.summary}</div></div>`
+    : `<div class="locked-features">
+        <div class="locked-row" onclick="openModal('locked_ai')"><span class="lock-icon">🔒</span><span class="lock-label">AI Analysis — Claude synthesis</span><span class="lock-cta">Unlock Pro →</span></div>
+       </div>`;
+
+  const exportHtml = isPro
+    ? `<div class="result-actions">
+        <button class="result-action-btn copy-btn" style="background:var(--surface2);border:1px solid var(--border)" onclick="copyResult()">Copy</button>
+        <button class="result-action-btn pdf-btn" style="background:var(--accent-dim);color:var(--accent);border:1px solid rgba(232,255,71,.2)" onclick="downloadPDF()">↓ PDF</button>
+        <button class="result-action-btn csv-btn" style="background:var(--accent-dim);color:var(--accent);border:1px solid rgba(232,255,71,.2)" onclick="downloadCSV()">↓ CSV</button>
+       </div>`
+    : `<div class="locked-features">
+        <div class="locked-row" onclick="openModal('locked_pdf')"><span class="lock-icon">🔒</span><span class="lock-label">PDF Report</span><span class="lock-cta">Unlock Pro →</span></div>
+        <div class="locked-row" onclick="openModal('locked_csv')"><span class="lock-icon">🔒</span><span class="lock-label">Export CSV</span><span class="lock-cta">Unlock Pro →</span></div>
+       </div>`;
+
+  document.getElementById('resultContent').innerHTML = `
+    <div class="risk-header">
+      <div>
+        <span class="risk-badge ${rl}">${rl.toUpperCase()}</span>
+        <div style="font-family:var(--mono);font-size:.66rem;color:var(--muted);margin-top:.3rem">${sigs.length} signal${sigs.length!==1?'s':''} · ${Math.round(conf*100)}% confidence</div>
+      </div>
+      <div><div class="score-num" style="color:${color}">${sc}</div><div class="score-label">/ 100</div></div>
+    </div>
+    <div class="score-bar-track"><div class="score-bar-fill" id="scoreBar" style="width:0;background:${color}"></div></div>
+    ${sigs.length?`<div class="signals-list">${sigHtml}</div>`:''}
+    <div class="recommendation">${rec}</div>
+    ${actHtml}${aiHtml}${exportHtml}
+    ${ms?`<div style="font-family:var(--mono);font-size:.66rem;color:var(--muted);text-align:right">processed in ${Math.round(ms)}ms</div>`:''}`;
+
+  setTimeout(() => { const b=document.getElementById('scoreBar'); if(b) b.style.width=`${sc}%`; }, 80);
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────
+function saveToHistory(text, data) {
+  const h = getHistory();
+  h.unshift({id:Date.now(),text:text.slice(0,100),risk_score:data.risk_score,risk_level:data.risk_level,signals_count:(data.signals||[]).length,timestamp:new Date().toISOString(),data});
+  localStorage.setItem('th_history', JSON.stringify(h.slice(0,50)));
+  renderHistory();
+}
+function getHistory() { try{return JSON.parse(localStorage.getItem('th_history')||'[]');}catch{return[];} }
+function renderHistory() {
+  const el = document.getElementById('historyContent');
+  const s = getState();
+  if (!s.isPro) {
+    el.innerHTML = `<div class="history-locked">
+      <span class="lock-big">🔒</span>
+      <p>Analysis history is a Pro feature.<br>Upgrade to keep a record of every analysis.</p>
+      <button class="plan-btn pro-btn" style="max-width:190px;padding:.55rem;margin-top:.25rem" onclick="openModal('locked_history')">Unlock History →</button>
+    </div>`; return;
+  }
+  const h = getHistory();
+  if (!h.length) { el.innerHTML='<p class="history-empty">No analyses yet — run your first one above.</p>'; return; }
+  const c=s=>s<20?'var(--safe)':s<60?'var(--warn)':'var(--danger)';
+  el.innerHTML = `<div class="history-list">
+    ${h.slice(0,10).map(i=>`<div class="history-item" onclick="reloadHistory(${i.id})">
+      <span class="history-score" style="color:${c(i.risk_score)}">${i.risk_score}</span>
+      <div class="history-meta"><div class="h-text">${i.text}…</div><div class="h-time">${new Date(i.timestamp).toLocaleString()} · ${i.signals_count} signals</div></div>
+      <span class="risk-badge ${i.risk_level}" style="font-size:.6rem">${i.risk_level.toUpperCase()}</span>
+    </div>`).join('')}
+  </div>`;
+}
+function reloadHistory(id) {
+  const i = getHistory().find(x=>x.id===id); if(!i) return;
+  document.getElementById('msg').value = i.text;
+  renderResult(i.data, true);
+  document.getElementById('analyzer').scrollIntoView({behavior:'smooth'});
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────
+function downloadPDF() {
+  if(!window._last) return;
+  const {data,text} = window._last;
+  const c=`TRUSTHIRE ANALYSIS REPORT\nGenerated: ${new Date().toLocaleString()}\n${'─'.repeat(48)}\n\nRISK SCORE: ${data.risk_score}/100\nRISK LEVEL: ${(data.risk_level||'').toUpperCase()}\nCONFIDENCE: ${Math.round((data.confidence||0)*100)}%\n\nRECOMMENDATION:\n${data.recommendation}\n\nSIGNALS DETECTED (${(data.signals||[]).length}):\n${(data.signals||[]).map(s=>`  [${(s.severity||'').toUpperCase()}] ${s.message}`).join('\n')}\n\nACTION ITEMS:\n${(data.action_items||[]).map(a=>`  → ${a}`).join('\n')}\n\n${data.ai_assessment?`AI ANALYSIS:\n${data.ai_assessment.summary}\n\n`:''}\nORIGINAL MESSAGE:\n${text}\n\n${'─'.repeat(48)}\nTrustHire v2.0 | trusthire.dev`;
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([c],{type:'text/plain'})),download:`trusthire-${Date.now()}.txt`});
+  a.click(); showToast('Report downloaded');
+}
+function downloadCSV() {
+  if(!window._last) return;
+  const {data} = window._last;
+  const csv=`timestamp,risk_score,risk_level,confidence,signals\n${new Date().toISOString()},${data.risk_score},${data.risk_level},${data.confidence},(${(data.signals||[]).length})`;
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:`trusthire-${Date.now()}.csv`});
+  a.click(); showToast('CSV exported');
+}
+function copyResult() {
+  if(!window._last) return;
+  const {data}=window._last;
+  navigator.clipboard.writeText(`TrustHire\nScore: ${data.risk_score}/100 (${data.risk_level})\n${data.recommendation}`).then(()=>showToast('Copied!'));
+}
+
+// ── API STATUS ────────────────────────────────────────────────────────────
+async function checkApi() {
+  try {
+    const r=await fetch(API_BASE.replace('/api/v1','/health'),{signal:AbortSignal.timeout(5000)});
+    const d=await r.json();
+    if(d.status==='healthy'){
+      document.getElementById('statusDot').className='status-dot';
+      document.getElementById('statusText').textContent=`api online · ai: ${d.ai_enabled?'on':'off'}`;
+    } else throw 0;
+  } catch {
+    document.getElementById('statusDot').className='status-dot offline';
+    document.getElementById('statusText').textContent='api offline — local mode';
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function showToast(msg,d=2800){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.getElementById('msg').addEventListener('input', updateCharCount);
+document.getElementById('msg').addEventListener('keydown', e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze();});
+
+if(new URLSearchParams(window.location.search).get('upgraded')==='true'){
+  const s=getState();s.isPro=true;saveState(s);
+  showToast('🎉 Welcome to Pro! All features unlocked.',5000);
+  history.replaceState({},'',window.location.pathname);
+}
+
+updateUsageUI();
+renderHistory();
+checkApi();
+setInterval(checkApi, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+tests/
+docs/
+*.md
+.env
+.env.*
+!.env.example
+node_modules/
+*.zip
